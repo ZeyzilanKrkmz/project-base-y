@@ -1,9 +1,9 @@
 const mongoose=require("mongoose");
 
 const schema=mongoose.Schema({
-    permission:{type:String},
+    permission:{type:String,required:true},
     role_id:{type:String,required:true},
-    created_by:{type:mongoose.SchemaTypes.ObjectId,required:true}
+    created_by:{type:mongoose.SchemaTypes.ObjectId}
 
     },{
     versionKey:false,
@@ -18,4 +18,4 @@ class RolePrivileges extends mongoose.Model{
 
 }
 schema.loadClass(RolePrivileges);
-module.exports=mongoose.node("role_privileges",schema);
+module.exports=mongoose.model("role_privileges",schema);

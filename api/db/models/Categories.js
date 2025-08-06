@@ -1,8 +1,9 @@
 const mongoose=require("mongoose");
 
-const schema=mongoose.Schema({
+const schema=new mongoose.Schema({
+    name:{type:String,required:true},
     is_active: {type: Boolean, default: true},
-    created_by: {type: mongoose.SchemaTypes.ObjectId, required: true}
+    created_by: {type: mongoose.SchemaTypes.ObjectId}
 
     },{
     versionKey:false,
@@ -17,4 +18,5 @@ class Categories extends mongoose.Model{
 
 }
 schema.loadClass(Categories);
-module.exports=mongoose.node("categories",schema);
+const CategoriesModel=mongoose.model("categories",schema);
+module.exports=CategoriesModel;

@@ -1,11 +1,11 @@
 const mongoose=require("mongoose");
 
 const schema=mongoose.Schema({
-    level:String,
+    level:mongoose.Schema.Types.Mixed,
     email:String,
     location:String,
     proc_type:String,
-    log:String
+    log:mongoose.SchemaTypes.Mixed
 
     },{
     versionKey:false,
@@ -20,4 +20,4 @@ class AuditLogs extends mongoose.Model{
 
 }
 schema.loadClass(AuditLogs);
-module.exports=mongoose.node("audit_logs",schema);
+module.exports=mongoose.model("audit_logs",schema);
