@@ -1,54 +1,47 @@
+
+
 require('dotenv').config();
 
-(process.env.NODE_ENV!="production")
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 
+const app = express();
 
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+app.use((req, res, next) => {
+  console.log('📡 Incoming:', req.method, req.url);
+  next();
+});
 
-
-
-var app = express();
-
-
-
-// view engine setup
+// View engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// Middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api',require('./routes/index'));//http://localhost:3000
+// Routes
+app.use('/api', require('./routes/index'));
 
+app.get('/health', (req, res) => res.send('ok'));
 
+// 404
+app.use((req, res, next) => next(createError(404)));
 
-
-
-/*app.use('/users', require('./routes/users'));//http://localhost:3000/users
-app.use('/auditlogs',require('./routes/auditlogs'));//http://localhost:3000/auditlogs
-app.use('/categories',require('./routes/categories'));//http://localhost:3000/categories*/
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
-
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+// Error handler
+app.use(function (err, req, res, next) {
+  const isDev = req.app.get('env') === 'development';
+  res.status(err.status || 500).json({
+    code: err.status || 500,
+    message: err.message || 'Internal Server Error',
+    stack: isDev ? err.stack : undefined
+  });
 });
 
 module.exports = app;

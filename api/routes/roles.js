@@ -1,17 +1,20 @@
 const express=require("express");
 const router=express.Router();
 const permissions = require("../config/role_prvgs");
-
-
+const auth=require("../lib/auth")();
 const Roles=require("../db/models/Roles");
 const RolePrivileges=require("../db/models/RolePrivileges");
-
 const Response=require("../lib/Response");
 const CustomError = require("../lib/Error");
 const Enum = require("../config/Enum");
 const Categories = require("../db/models/Categories");
 
-router.get("/",async (req,res)=>{
+
+router.all("*",auth.authenticate(),(req,res,next)=>{
+    next();
+})
+
+router.get("/",/*auth.checkRoles("role_view"),*/async (req,res)=>{
     try{
         let roles=await Roles.find({});
 
@@ -23,7 +26,7 @@ router.get("/",async (req,res)=>{
     }
 });
 
-router.post("/add",async(req,res)=>{
+router.post("/add",auth.checkRoles("role_add"),async(req,res)=>{
     try{
         if(!req.body.role_name) throw new CustomError(
             Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!",
@@ -66,7 +69,7 @@ router.post("/add",async(req,res)=>{
 });
 
 
-router.post("/update",async(req,res)=>{
+router.post("/update"/*,auth.checkRoles("role_update")*/,async(req,res)=>{
     try{
         if(!req.body._id) throw new CustomError(
             Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!",
@@ -116,7 +119,7 @@ router.post("/update",async(req,res)=>{
 });
 
 
-router.post("/delete",async(req,res)=>{
+router.post("/delete",auth.checkRoles("role_delete"),async(req,res)=>{
     try{
         if(!req.body._id) {
             throw new CustomError(
@@ -133,7 +136,7 @@ router.post("/delete",async(req,res)=>{
         res.status(errorResponse.code).json(errorResponse);
     }
 });
-router.get("/role_prvgs", async (req, res) => {
+router.get("/role_prvgs", auth.checkRoles("role_privileges"),async (req,res) => {
     try {
         const grouped = permissions.privGroups.map(group => {
             return {

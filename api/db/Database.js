@@ -1,31 +1,40 @@
-const mongoose=require("mongoose")
-let instance=null;
-class Database{
+// db/Database.js
+require('dotenv').config();
+const mongoose = require('mongoose');
 
-    constructor(){
+let instance = null;
 
-        if(!instance){
-            this.mongoConnection=null;
-            instance=this;
+class Database {
+    constructor() {
+        if (!instance) {
+            this.mongoConnection = null;
+            instance = this;
         }
         return instance;
     }
-    async connect(options){
-        const url = process.env.MONGO_URI;
-        try{
-            console.log("DB connecting....")
-            let db=await mongoose.connect(process.env.CONNECTION_STRING);
 
-            this.mongoConnection=db;
-            console.log("DB Connected.");
-
-        }catch(err){
-            console.error(err);
-            process.exit(1);
-
+    async connect() {
+        const uri = process.env.MONGO_URI || process.env.CONNECTION_STRING;
+        if (!uri) {
+            console.error('❌ MONGO_URI (veya CONNECTION_STRING) .env içinde tanımlı değil.');
+            throw new Error('Missing Mongo URI');
         }
 
-    }
+        // Loglar
+        mongoose.connection.on('connecting', () => console.log('🟡 DB connecting...'));
+        mongoose.connection.on('connected',  () => console.log('🟢 DB connected'));
+        mongoose.connection.on('disconnected', () => console.warn('🛑 DB disconnected'));
+        mongoose.connection.on('error', err => console.error('🔴 DB error:', err.message));
 
+        // Kuyruk büyümesin:
+        mongoose.set('bufferCommands', false);
+
+        // Tek sefer bağlan
+        if (this.mongoConnection) return this.mongoConnection;
+
+        this.mongoConnection = await mongoose.connect(uri, {});
+        return this.mongoConnection;
+    }
 }
-module.exports=Database;
+
+module.exports = new Database();
