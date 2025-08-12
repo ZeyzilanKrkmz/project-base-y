@@ -1,7 +1,7 @@
 const Enum=require("../config/Enum")
 const config=require("../config");
 const CustomError=require("./Error");
-const i18n=new(require("../i18n/i18n"))(config.DEFAULT_LANG);
+const i18n=new(require("../i18n/i18nn"))(config.DEFAULT_LANG);
 
 
 class Response {
