@@ -3,7 +3,7 @@ const router=express.Router();
 const AuditLogs=require("../db/models/AuditLogs");
 const Response=require("../lib/Response");
 const moment=require("moment");
-const auth=require("../lib/Auth")();
+const auth=require("../lib/auth")();
 
 router.all("*",auth.authenticate(),async(req,res,next)=>{
     next();
