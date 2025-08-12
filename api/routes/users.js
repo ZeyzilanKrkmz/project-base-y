@@ -1,5 +1,5 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 const bcrypt = require('bcrypt-nodejs');
 const is = require('is_js');
 const Roles = require('../db/models/Roles');
@@ -11,6 +11,10 @@ const CustomError = require('../lib/Error');
 const jwt = require('jwt-simple');
 const config = require('../config');
 const auth = require('../lib/auth')();
+
+const I18n = require('../i18n/i18nn'); // dosya adı gerçekten i18nn ise bırak
+const i18n = new I18n(config.DEFAULT_LANG);
+
 
 
 router.post('/register', async (req, res) => {
@@ -64,6 +68,10 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/auth', async (req, res) => {
+  console.log('📦 BODY in /auth:', req.body);
+
+  console.log('BODY >>>', req.headers['content-type'], req.body);
+
   try {
     const { email, password } = req.body;
     Users.validateFieldsBeforeAuth(email, password);
@@ -105,18 +113,54 @@ router.get('/', auth.checkRoles('user_view'), async (req, res) => {
 router.post('/add', auth.checkRoles('user_add'), async (req, res) => {
   const body = req.body;
   try {
-    if (!body.email) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["email]), 'email field must be filled.');
-    if (!is.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["email"]), 'email field must be email.');
-    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["password"])', 'password field must be filled.');
-    if (body.password.length < Enum.PASS_LENGTH) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["password"]), 'password length must be greater than ' + Enum.PASS_LENGTH);
+    if (!body.email) {
+      throw new CustomError(
+          Enum.HTTP_CODES.BAD_REQUEST,
+          i18n.translate('COMMON.FIELD_MUST_BE_FILLED', req.user?.language || config.DEFAULT_LANG, ['email']),
+          'email field must be filled.'
+      );
     }
-    if (!body.roles || !Array.isArray(body.roles) || body.roles.length === 0) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["roles"]), 'roles field must be an array.');
+
+    if (!is.email(body.email)) { // <-- parantez düzeltildi
+      throw new CustomError(
+          Enum.HTTP_CODES.BAD_REQUEST,
+          i18n.translate('COMMON.FIELD_MUST_BE_EMAIL', req.user?.language || config.DEFAULT_LANG, ['email']),
+          'email field must be email.'
+      );
+    }
+
+    if (!body.password) {
+      throw new CustomError(
+          Enum.HTTP_CODES.BAD_REQUEST,
+          i18n.translate('COMMON.FIELD_MUST_BE_FILLED', req.user?.language || config.DEFAULT_LANG, ['password']),
+          'password field must be filled.'
+      );
+    }
+
+    if (body.password.length < Enum.PASS_LENGTH) {
+      throw new CustomError(
+          Enum.HTTP_CODES.BAD_REQUEST,
+          i18n.translate('COMMON.FIELD_MIN_LENGTH', req.user?.language || config.DEFAULT_LANG, ['password', String(Enum.PASS_LENGTH)]),
+          'password length must be greater than ' + Enum.PASS_LENGTH
+      );
+    }
+
+    if (!Array.isArray(body.roles) || body.roles.length === 0) {
+      throw new CustomError(
+          Enum.HTTP_CODES.BAD_REQUEST,
+          i18n.translate('COMMON.FIELD_MUST_BE_FILLED', req.user?.language || config.DEFAULT_LANG, ['roles']),
+          'roles field must be an array.'
+      );
     }
 
     const roles = await Roles.find({ _id: { $in: body.roles } });
-    if (roles.length === 0) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["roles"]), 'roles not found.');
+    if (roles.length === 0) {
+      throw new CustomError(
+          Enum.HTTP_CODES.BAD_REQUEST,
+          i18n.translate('COMMON.NOT_FOUND', req.user?.language || config.DEFAULT_LANG, ['roles']),
+          'roles not found.'
+      );
+    }
 
     const password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(8), null);
 
@@ -130,21 +174,21 @@ router.post('/add', auth.checkRoles('user_add'), async (req, res) => {
     });
 
     for (let i = 0; i < roles.length; i++) {
-      await UserRoles.create({ // <-- UserRole -> UserRoles
+      await UserRoles.create({
         role_id: roles[i]._id,
         user_id: user._id
       });
     }
 
-    return res.status(Enum.HTTP_CODES.CREATED).json(Response.successResponse({ success: true }, Enum.HTTP_CODES.CREATED));
+    return res
+        .status(Enum.HTTP_CODES.CREATED)
+        .json(Response.successResponse({ success: true }, Enum.HTTP_CODES.CREATED));
   } catch (err) {
     const errorResponse = Response.errorResponse(err);
-    if (errorResponse && errorResponse.code) {
-      return res.status(errorResponse.code).json(errorResponse);
-    }
-    return res.status(500).json({ code: 500, message: 'Bilinmeyen bir hata oluştu.', error: err.message || err });
+    return res.status(errorResponse.code || 500).json(errorResponse);
   }
 });
+
 
 // Güncelle
 router.post('/update', auth.checkRoles('user_update'), async (req, res) => {
@@ -190,7 +234,13 @@ router.post('/update', auth.checkRoles('user_update'), async (req, res) => {
 router.post('/delete', auth.checkRoles('user_delete'), async (req, res) => {
   try {
     const body = req.body;
-    if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["id"]), '_id fields must be filled.');
+    if (!body._id) {
+      throw new CustomError(
+          Enum.HTTP_CODES.BAD_REQUEST,
+          i18n.translate('COMMON.FIELD_MUST_BE_FILLED', req.user?.language || config.DEFAULT_LANG, ['_id']),
+          '_id field must be filled.'
+      );
+    }
 
     await Users.deleteOne({ _id: body._id });
     await UserRoles.deleteMany({ user_id: body._id });
@@ -201,5 +251,6 @@ router.post('/delete', auth.checkRoles('user_delete'), async (req, res) => {
     return res.status(errorResponse.code || 500).json(errorResponse);
   }
 });
+
 
 module.exports = router;
