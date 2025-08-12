@@ -47,7 +47,7 @@ router.post("/",auth.checkRoles("auditlogs_view"),async(req,res)=>{
    }catch(err){
        console.error("caught error in auditlogs: ",err);
 
-       let errorResponse=Response.errorResponse(err);
+       let errorResponse=Response.errorResponse(err,req.user?.language);
        res.status(errorResponse.code).json(errorResponse);
    }
 });
