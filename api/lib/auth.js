@@ -1,5 +1,3 @@
-
-
 const passport=require("passport");
 const {ExtractJwt,Strategy}=require("passport-jwt");
 const Users=require("../db/models/Users");
@@ -35,6 +33,7 @@ module.exports=function(){
                     email:user.email,
                     first_name:user.first_name,
                     last_name:user.last_name,
+                    language:user.language,
                     exp:parseInt(Date.now()/1000)*config.JWT.EXPIRE_TIME
 
                 });
@@ -68,7 +67,9 @@ module.exports=function(){
                 if(i>=expectedRoles.length){
                     let response=Response.errorResponse(new CustomError(HTTP_CODES.UNAUTHORIZED,"need permission","need permission"));
                     return res.json(response.code).json(response);
-                }return next();
+                }
+
+                return next();
             }
         }
     }

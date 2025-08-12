@@ -29,14 +29,14 @@ router.get("/",/*auth.checkRoles("role_view"),*/async (req,res)=>{
 router.post("/add",auth.checkRoles("role_add"),async(req,res)=>{
     try{
         if(!req.body.role_name) throw new CustomError(
-            Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!",
+            Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["role_name"]),
             "_id field must be filled."
         );
 
         if(!req.body.permissions||!Array.isArray(req.body.permissions)||permissions.length==0){
             throw new CustomError(
-                Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!",
-                "permissions field must be an Array."
+                Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["role_name"]),
+                i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["role_name"])
             );
         }
 
@@ -72,7 +72,7 @@ router.post("/add",auth.checkRoles("role_add"),async(req,res)=>{
 router.post("/update"/*,auth.checkRoles("role_update")*/,async(req,res)=>{
     try{
         if(!req.body._id) throw new CustomError(
-            Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!",
+            Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["role_name"]),
             "_id field must be filled."
         );
         let update={};
@@ -123,7 +123,7 @@ router.post("/delete",auth.checkRoles("role_delete"),async(req,res)=>{
     try{
         if(!req.body._id) {
             throw new CustomError(
-                Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!",
+                Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["role_name"]),
                 "_id field must be filled."
             );
         }
