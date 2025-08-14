@@ -16,10 +16,18 @@ router.all("*",auth.authenticate(),(req,res,next)=>{
 
 router.get("/",/*auth.checkRoles("role_view"),*/async (req,res)=>{
     try{
-        let roles=await Roles.find({});
+        let roles=await Roles.find({}).lean();
+
+        roles= JSON.parse(JSON.stringify(roles));
+
+        for(let i=0;i<roles.lenght;i++){
+            let permissions=await RolePrivileges.find({role_id:roles[i]._id});
+            roles[i].permissions=permissions;
+        }
 
         res.json(Response.successResponse(roles));
-    }catch(err){
+    }
+    catch(err){
         let errorResponse=Response.errorResponse(err);
         res.status(errorResponse.code).json(errorResponse);
 

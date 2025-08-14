@@ -101,9 +101,18 @@ router.all('*', auth.authenticate(), (req, res, next) => next());
 // Liste
 router.get('/', auth.checkRoles('user_view'), async (req, res) => {
   try {
-    const users = await Users.find({});
+    const users = await Users.find({},{password:0}).lean();//burada eklenen password'e 0 atandığında users req'i gönderildiğinde sadece psw alanı görünmezken
+    // eğer 1 alırsa aynı req gönderildiğinde bu sefer sadece id ve pasw alanı döndüürlmüş olur.
+
+    for(let i=0;i<users.length;i++){
+      let roles=await UserRoles.find({user_id,users[i]._id}).populate("role_id");
+      users[i].roles=roles;
+
+    }
+
     return res.json(Response.successResponse(users));
-  } catch (err) {
+  }
+  catch (err) {
     const errorResponse = Response.errorResponse(err);
     return res.status(errorResponse.code || 500).json(errorResponse);
   }
