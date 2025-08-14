@@ -77,8 +77,8 @@ router.post('/auth', async (req, res) => {
     Users.validateFieldsBeforeAuth(email, password);
 
     const user = await Users.findOne({ email });
-    if (!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'email or password wrong.');
-    if (!user.validPassword(password)) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'email or password wrong.');
+    if (!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE",config.DEFAULT_LANG),i18n.translate("USERS.AUTH_ERROR",config.DEFAULT_LANG));
+    if (!user.validPassword(password)) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE",config.DEFAULT_LANG),i18n.translate("USERS.AUTH_ERROR",config.DEFAULT_LANG));
 
     const payload = {
       id: user._id,
