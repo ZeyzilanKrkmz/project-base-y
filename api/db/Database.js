@@ -1,4 +1,3 @@
-// db/Database.js
 require('dotenv').config();
 const mongoose = require('mongoose');
 
@@ -22,17 +21,25 @@ class Database {
 
         // Loglar
         mongoose.connection.on('connecting', () => console.log('🟡 DB connecting...'));
-        mongoose.connection.on('connected',  () => console.log('🟢 DB connected'));
+        mongoose.connection.on('connected', () => console.log('🟢 DB connected'));
         mongoose.connection.on('disconnected', () => console.warn('🛑 DB disconnected'));
         mongoose.connection.on('error', err => console.error('🔴 DB error:', err.message));
 
-        // Kuyruk büyümesin:
+        // Kuyruk büyümesin
         mongoose.set('bufferCommands', false);
 
         // Tek sefer bağlan
         if (this.mongoConnection) return this.mongoConnection;
 
-        this.mongoConnection = await mongoose.connect(uri, {});
+        // Bağlantıya timeout ekleyelim ki beklemede kalmasın
+        const timeoutMs = 10_000;
+        this.mongoConnection = await Promise.race([
+            mongoose.connect(uri, {}),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('DB connect timeout')), timeoutMs)
+            )
+        ]);
+
         return this.mongoConnection;
     }
 }

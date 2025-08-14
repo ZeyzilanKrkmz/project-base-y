@@ -79,10 +79,11 @@ router.post("/add",auth.checkRoles("role_add"),async(req,res)=>{
 
 router.post("/update"/*,auth.checkRoles("role_update")*/,async(req,res)=>{
     try{
-        if(!req.body._id) throw new CustomError(
-            Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["role_name"]),
-            "_id field must be filled."
-        );
+        if(!req.body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,["_id"])));
+        let userRole=await UserRoles.findOne([user_id=req.user.id,role_id=body._id]);
+        if(userRole){
+            Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language,i18n.translate("COMMON.FIELD_MUST_BE_FILLED",req.user.language));
+        }
         let update={};
         if(req.body.role_name)update.role_name=req.body.role_name;
         if(typeof req.body.is_active==="boolean")update.is_active=req.body.is_active;

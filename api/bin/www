@@ -1,43 +1,50 @@
-#!/usr/bin/env node
+
+//usr/bin/env node
 
 require('dotenv').config();
 const http = require('http');
 const app = require('../app');
 const DB = require('../db/Database');
 
-
-
-var port=3001;
+const port = normalizePort(process.env.PORT || '3001');
 app.set('port', port);
 
 (async () => {
   try {
-    await DB.connect();              // << önce DB
+    // DB bağlantısını ister burada aktif et, ister şimdilik yorum satırı yap
+    console.log('🟡 DB connecting...');
+    await DB.connect();
+    console.log('🟢 DB connected');
+
     const server = http.createServer(app);
-    server.listen(port, '127.0.0.1', () => {
-      console.log(`✅ Server running on http://127.0.0.1:${port}`);
+
+    // 0.0.0.0 => hem localhost hem LAN erişimine izin verir
+    server.listen(port, '0.0.0.0', () => {
+      console.log(`✅ Server running on http://localhost:${port}`);
     });
-    server.on('error', (err) => {
-      console.error('❌ server error:', err);
-    });
+
+    server.on('error', onError);
+
   } catch (err) {
     console.error('❌ DB connection failed:', err.message);
-    process.exit(1); // burada çıkmak makul, çünkü DB yoksa API anlamsız
+    process.exit(1);
   }
 })();
 
 function normalizePort(val) {
-  const p = parseInt(val, 10);
-  if (isNaN(p)) return val;
-  if (p >= 0) return p;
+  const port = parseInt(val, 10);
+  if (isNaN(port)) return val;
+  if (port >= 0) return port;
   return false;
 }
 
 function onError(error) {
   if (error.syscall !== 'listen') throw error;
+
   if (error.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${port} kullanımda. Süreci kapat veya PORT'u değiştir.`);
+    console.error(`❌ Port ${port} kullanımda. Başka bir uygulama kapatılmalı veya PORT değiştirilmelidir.`);
     process.exit(1);
   }
   throw error;
 }
+
