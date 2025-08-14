@@ -5,7 +5,8 @@ module.exports={
         "ALREADY_EXISTS":"Already exists",
         "UNKNOWN_ERROR":"Unknown error!",
         "FIELD_MUST_BE_FİLLED":"{} name field must be filled.",
-        "FIELD_MUST_BE_TYPE":"{} field must be a {}"
+        "FIELD_MUST_BE_TYPE":"{} field must be a {}",
+        "NEED_PERMISSIONS":"Need permissions"
     },
     "USERS":{
         "AUTH_ERROR":"Email or password wrong",

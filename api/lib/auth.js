@@ -1,6 +1,7 @@
 const passport=require("passport");
 const {ExtractJwt,Strategy}=require("passport-jwt");
 const Users=require("../db/models/Users");
+const Roles=require("../db/models/Roles");
 const UserRoles=require("../db/models/UserRoles");
 const RolePrivileges=require("../db/models/RolePrivileges");
 const config=require("../config");

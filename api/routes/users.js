@@ -11,11 +11,23 @@ const CustomError = require('../lib/Error');
 const jwt = require('jwt-simple');
 const config = require('../config');
 const auth = require('../lib/auth')();
-
 const I18n = require('../i18n/i18nn'); // dosya adı gerçekten i18nn ise bırak
 const i18n = new I18n(config.DEFAULT_LANG);
+const {rateLimit}=require("express-rate-limit");
+const RateLimitMongo=require("rate-limit-mongo");
 
+const limiter=rateLimit({
+  store:new RateLimitMongo({
+    uri:config.CONNECTION_STRING,
+    collectionName:"rateLimits",
+    "expireTimeMs":15*60*1000,
+    windowMs:15*60*1000,//15 dk içinde
+    limit:5,//her IP için max 100 deneme yapılabilir.
+    //standardHeaders:'draft-7',
+    legacyHeaders:false,
+  })
 
+})
 
 router.post('/register', async (req, res) => {
   const body = req.body;
@@ -67,7 +79,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/auth', async (req, res) => {
+router.post('/auth',limiter, async (req, res) => {
   console.log('📦 BODY in /auth:', req.body);
 
   console.log('BODY >>>', req.headers['content-type'], req.body);
@@ -105,7 +117,7 @@ router.get('/', auth.checkRoles('user_view'), async (req, res) => {
     // eğer 1 alırsa aynı req gönderildiğinde bu sefer sadece id ve pasw alanı döndüürlmüş olur.
 
     for(let i=0;i<users.length;i++){
-      let roles=await UserRoles.find({user_id,users[i]._id}).populate("role_id");
+      let roles=await UserRoles.find({user_id:users[i]._id}).populate("role_id");
       users[i].roles=roles;
 
     }
@@ -213,6 +225,11 @@ router.post('/update', auth.checkRoles('user_update'), async (req, res) => {
     if (body.first_name) updates.first_name = body.first_name;
     if (body.last_name) updates.last_name = body.last_name;
     if (body.phone_number) updates.phone_number = body.phone_number;
+
+    if(body._id==req.user.id){
+      body.roles=[];
+      //throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.NEED_PERMISSIONS",req.user.language),i18n.translate("COMMON.NEED_PERMISSIONS",req.user.language));
+    }
 
     if (Array.isArray(body.roles) && body.roles.length > 0) {
       const userRoles = await UserRoles.find({ user_id: body._id });
